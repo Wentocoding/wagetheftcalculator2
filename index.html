@@ -391,4 +391,145 @@
         </div>
     </div>
 
-    <div class="period-block" style="border-left
+    <div class="period-block" style="border-left: 5px solid var(--break-color);">
+        <div class="period-title break-style">
+            <span>寒輔 (Winter)</span>
+            <span class="subtotal-tag" id="sub_winter">$0</span>
+        </div>
+        <div class="input-row">
+            <div class="input-group" style="flex: 2;">
+                <label>輔導課 / 週 <span style="font-size:0.8rem; color:#666;">(8-9節/夜/六)</span></label>
+                <input type="number" id="winter_tut" placeholder="每週節數" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>上課週數</label>
+                <input type="number" id="winter_weeks" value="3" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <div class="period-block" style="border-left: 5px solid var(--break-color);">
+        <div class="period-title break-style">
+            <span>暑輔 (Summer)</span>
+            <span class="subtotal-tag" id="sub_summer">$0</span>
+        </div>
+        <div class="input-row">
+            <div class="input-group" style="flex: 2;">
+                <label>輔導課 / 週 <span style="font-size:0.8rem; color:#666;">(8-9節/夜/六)</span></label>
+                <input type="number" id="summer_tut" placeholder="每週節數" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>上課週數</label>
+                <input type="number" id="summer_weeks" value="5" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <div class="total-loss">
+        <h3>全年度總計短少金額</h3>
+        <div class="amount" id="grandTotal">$0</div>
+        <div class="loss-breakdown">
+            ( 年終考績 + 每月加給 + 鐘點費損失 )
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // 頁面載入時觸發一次角色檢查
+    window.onload = function() {
+        handleRoleChange();
+    };
+
+    function handleRoleChange() {
+        const roleSelect = document.getElementById('role');
+        const sem1Add = document.getElementById('sem1_add');
+        const sem2Add = document.getElementById('sem2_add');
+
+        // 如果選擇「專任教師 (16)」，自動將追加基本鐘點設為 3
+        if (roleSelect.value === '16') {
+            sem1Add.value = 3;
+            sem2Add.value = 3;
+        } else {
+            // 切換為其他身份時，若數值為 3 則歸零 (避免誤刪使用者手動輸入的其他數值)
+            if(sem1Add.value == 3) sem1Add.value = 0;
+            if(sem2Add.value == 3) sem2Add.value = 0;
+        }
+        calculate();
+    }
+
+    function calculate() {
+        // --- 1. 計算全薪 ---
+        const baseSalary = parseFloat(document.getElementById('base_salary').value) || 0;
+        const researchFee = parseFloat(document.getElementById('research_fee').value) || 0;
+        const bossAllowance = parseFloat(document.getElementById('boss_allowance').value) || 0;
+        
+        const monthlyFullSalary = baseSalary + researchFee + bossAllowance;
+        document.getElementById('monthlySalaryDisplay').innerText = `全薪合計: $${monthlyFullSalary.toLocaleString()}`;
+
+        // --- 2. 獎金 ---
+        const perfGrade = parseFloat(document.getElementById('perf_grade').value);
+        const expectedYearEnd = monthlyFullSalary * 1.5;
+        const expectedPerf = monthlyFullSalary * perfGrade;
+        
+        document.getElementById('expected_year_end_display').innerText = `$${expectedYearEnd.toLocaleString()}`;
+        document.getElementById('expected_perf_display').innerText = `$${expectedPerf.toLocaleString()}`;
+
+        const actualYearEnd = parseFloat(document.getElementById('actual_year_end').value) || 0;
+        const actualPerf = parseFloat(document.getElementById('actual_perf').value) || 0;
+
+        const bonusLoss = Math.max(0, (expectedYearEnd + expectedPerf) - (actualYearEnd + actualPerf));
+        document.getElementById('sub_bonus').innerText = `短少 $${bonusLoss.toLocaleString()}`;
+        document.getElementById('bonus_gap_display').innerText = `獎金短少: $${bonusLoss.toLocaleString()}`;
+
+        // --- 3. 加給 ---
+        const monthlyAllowanceLoss = parseFloat(document.getElementById('monthly_allowance').value) || 0;
+        const allowanceMonths = parseFloat(document.getElementById('allowance_months').value) || 0;
+        const totalAllowanceLoss = monthlyAllowanceLoss * allowanceMonths;
+        document.getElementById('allowanceTotalDisplay').innerText = `年損: $${totalAllowanceLoss.toLocaleString()}`;
+
+        // --- 4. 鐘點 ---
+        const roleBase = parseInt(document.getElementById('role').value);
+        const DIFF_OVERTIME = 80; 
+        const DIFF_TUTORIAL = 50; 
+        const DIFF_ADDED_BASE = 505;
+
+        function getSectionLoss(regHours, tutHours, addHours, weeks, isBreak) {
+            regHours = parseFloat(regHours) || 0;
+            tutHours = parseFloat(tutHours) || 0;
+            addHours = parseFloat(addHours) || 0;
+            weeks = parseFloat(weeks) || 0;
+
+            let weeklyLoss = 0;
+            if (isBreak) {
+                weeklyLoss = tutHours * DIFF_TUTORIAL;
+            } else {
+                let overtimeHours = Math.max(0, regHours - roleBase);
+                let overtimeLoss = overtimeHours * DIFF_OVERTIME;
+                let tutorialLoss = tutHours * DIFF_TUTORIAL;
+                let addedBaseLoss = addHours * DIFF_ADDED_BASE;
+                weeklyLoss = overtimeLoss + tutorialLoss + addedBaseLoss;
+            }
+            return weeklyLoss * weeks;
+        }
+
+        let loss1 = getSectionLoss(document.getElementById('sem1_reg').value, document.getElementById('sem1_tut').value, document.getElementById('sem1_add').value, document.getElementById('sem1_weeks').value, false);
+        document.getElementById('sub_sem1').innerText = `小計 $${loss1.toLocaleString()}`;
+
+        let loss2 = getSectionLoss(document.getElementById('sem2_reg').value, document.getElementById('sem2_tut').value, document.getElementById('sem2_add').value, document.getElementById('sem2_weeks').value, false);
+        document.getElementById('sub_sem2').innerText = `小計 $${loss2.toLocaleString()}`;
+
+        let loss3 = getSectionLoss(0, document.getElementById('winter_tut').value, 0, document.getElementById('winter_weeks').value, true);
+        document.getElementById('sub_winter').innerText = `小計 $${loss3.toLocaleString()}`;
+
+        let loss4 = getSectionLoss(0, document.getElementById('summer_tut').value, 0, document.getElementById('summer_weeks').value, true);
+        document.getElementById('sub_summer').innerText = `小計 $${loss4.toLocaleString()}`;
+
+        // --- 5. 總結 ---
+        let grandTotal = bonusLoss + totalAllowanceLoss + loss1 + loss2 + loss3 + loss4;
+        document.getElementById('grandTotal').innerText = `$${grandTotal.toLocaleString()}`;
+    }
+</script>
+
+</body>
+</html>
