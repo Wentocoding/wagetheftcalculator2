@@ -1,16 +1,27 @@
+這是一個重要的修正！如果行政的基本鐘點是 0，代表**每一節課**都應該算超鐘點，這筆金額會非常驚人。另外，「職務加給」通常是每個月固定的金額，如果這部分也有短缺，累積一年下來也是一筆大數目。
+
+這是 **《薪水小偷精算師 4.0》**，更新重點如下：
+
+1. **修正行政鐘點**：將「兼任行政」的基本鐘點預設值改為 **0**（代表所有上課節數皆視為超鐘點計算）。
+2. **新增職務加給欄位**：在最上方新增「每月職務加給短缺」欄位，系統會自動乘以 12 個月（預設）並加總到年度損失中。
+
+請複製以下代碼覆蓋原本的檔案：
+
+```html
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>薪水小偷精算師 3.0</title>
+    <title>薪水小偷精算師 4.0</title>
     <style>
         :root {
             --primary-color: #2c3e50;
             --accent-red: #c0392b;
-            --deep-red: #8b0000; /* 新增深紅色給最痛的損失 */
+            --deep-red: #8b0000;
             --semester-color: #3498db;
             --break-color: #e67e22;
+            --allowance-color: #d35400; /* 新增職務加給顏色 */
             --bg-color: #f4f7f6;
             --card-bg: #ffffff;
             --text-color: #333;
@@ -53,12 +64,13 @@
             margin-bottom: 25px;
         }
 
-        /* 身份選擇區 */
-        .role-section {
+        /* 身份與加給設定區 */
+        .settings-section {
             background-color: #ecf0f1;
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 25px;
+            border: 1px solid #dcdcdc;
         }
 
         label {
@@ -83,6 +95,19 @@
             border-color: var(--primary-color);
             outline: none;
             background-color: #fffdf0;
+        }
+
+        /* 職務加給區塊 */
+        .allowance-block {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #bbb;
+        }
+        
+        .allowance-label {
+            color: var(--allowance-color) !important;
+            display: flex;
+            justify-content: space-between;
         }
 
         /* 區塊樣式 */
@@ -112,7 +137,7 @@
             display: flex;
             gap: 10px;
             margin-bottom: 10px;
-            align-items: flex-end; /* 讓輸入框底部對齊 */
+            align-items: flex-end;
         }
 
         .input-group {
@@ -127,7 +152,6 @@
             border-radius: 4px;
         }
 
-        /* 特別強調「追加基本鐘點」 */
         .extra-loss-label {
             color: var(--deep-red) !important;
         }
@@ -170,21 +194,40 @@
 <body>
 
 <div class="calculator-card">
-    <h1>薪水小偷精算師 3.0</h1>
-    <div class="subtitle">追加計算：連每節 $505 的基本鐘點都要算回來</div>
+    <h1>薪水小偷精算師 4.0</h1>
+    <div class="subtitle">全面清算：鐘點費 + 職務加給</div>
 
-    <div class="role-section">
-        <label for="role">設定基本身份 (影響學期超鐘點起算)</label>
-        <select id="role" onchange="calculate()">
-            <option value="16">專任教師 (基本鐘點 16)</option>
-            <option value="13">班級導師 (基本鐘點 13)</option>
-            <option value="3">兼任行政 (基本鐘點 3)</option>
-        </select>
-        <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+    <div class="settings-section">
+        <div class="form-group">
+            <label for="role">設定基本身份 (影響學期超鐘點起算)</label>
+            <select id="role" onchange="calculate()">
+                <option value="16">專任教師 (基本鐘點 16)</option>
+                <option value="13">班級導師 (基本鐘點 13)</option>
+                <option value="0">兼任行政 (基本鐘點 0)</option> </select>
+        </div>
+
+        <div class="allowance-block">
+            <div class="input-row">
+                <div class="input-group" style="flex: 2;">
+                    <label class="allowance-label">
+                        <span>💰 每月職務加給短缺</span>
+                        <span id="allowanceTotalDisplay" style="color:#666; font-weight:normal;">年損: $0</span>
+                    </label>
+                    <input type="number" id="monthly_allowance" placeholder="輸入每月少給金額" min="0" oninput="calculate()">
+                </div>
+                <div class="input-group">
+                    <label>計算月數</label>
+                    <input type="number" id="allowance_months" value="12" min="0" oninput="calculate()">
+                </div>
+            </div>
+        </div>
+
+        <div style="font-size: 0.8rem; color: #666; margin-top: 10px;">
             * 費率差額說明：<br>
             1. 超鐘點：少給 $80/節 (505-425)<br>
             2. 輔導課：少給 $50/節 (550-500)<br>
-            3. 追加基本鐘點：少給 <b style="color:var(--deep-red)">$505/節</b> (全額損失)
+            3. 追加基本鐘點：少給 <b style="color:var(--deep-red)">$505/節</b><br>
+            4. 行政基本鐘點已修正為 0 (全額超鐘點)
         </div>
     </div>
 
@@ -197,7 +240,7 @@
         <div class="input-row">
             <div class="input-group">
                 <label class="extra-loss-label">🔥 追加基本鐘點 / 週</label>
-                <input type="number" id="sem1_add" placeholder="每週幾節？(如: 3)" min="0" oninput="calculate()" class="extra-loss-input">
+                <input type="number" id="sem1_add" placeholder="每週幾節？" min="0" oninput="calculate()" class="extra-loss-input">
             </div>
             <div class="input-group">
                 <label>上課週數</label>
@@ -226,7 +269,7 @@
         <div class="input-row">
             <div class="input-group">
                 <label class="extra-loss-label">🔥 追加基本鐘點 / 週</label>
-                <input type="number" id="sem2_add" placeholder="每週幾節？(如: 3)" min="0" oninput="calculate()" class="extra-loss-input">
+                <input type="number" id="sem2_add" placeholder="每週幾節？" min="0" oninput="calculate()" class="extra-loss-input">
             </div>
             <div class="input-group">
                 <label>上課週數</label>
@@ -284,7 +327,7 @@
         <h3>全年度總計短少金額</h3>
         <div class="amount" id="grandTotal">$0</div>
         <div class="loss-breakdown">
-            包含超鐘點、輔導課差額、以及<span style="color:var(--deep-red); font-weight:bold;">追加基本鐘點</span>損失
+            含職務加給、超鐘點、輔導課、追加基本鐘點
         </div>
     </div>
 
@@ -292,15 +335,23 @@
 
 <script>
     function calculate() {
+        // 1. 取得基本身份扣除額
         const roleBase = parseInt(document.getElementById('role').value);
         
         // --- 定義費率 ---
         const DIFF_OVERTIME = 80; // 505 - 425
         const DIFF_TUTORIAL = 50; // 550 - 500
-        const DIFF_ADDED_BASE = 505; // 0 - 505 (完全沒給)
+        const DIFF_ADDED_BASE = 505; // 0 - 505
 
-        // --- 計算函式 ---
-        // 參數: 正規課節數, 輔導課節數, 追加基本節數, 週數, 是否為寒暑輔
+        // --- 職務加給計算 ---
+        const monthlyAllowance = parseFloat(document.getElementById('monthly_allowance').value) || 0;
+        const allowanceMonths = parseFloat(document.getElementById('allowance_months').value) || 0;
+        const totalAllowanceLoss = monthlyAllowance * allowanceMonths;
+        
+        // 更新加給顯示
+        document.getElementById('allowanceTotalDisplay').innerText = `年損: $${totalAllowanceLoss.toLocaleString()}`;
+
+        // --- 課程損失計算函式 ---
         function getSectionLoss(regHours, tutHours, addHours, weeks, isBreak) {
             regHours = parseFloat(regHours) || 0;
             tutHours = parseFloat(tutHours) || 0;
@@ -314,14 +365,14 @@
                 weeklyLoss = tutHours * DIFF_TUTORIAL;
             } else {
                 // 學期中：
-                // 1. 超鐘點損失
+                // 1. 超鐘點損失 (若基本鐘點是0，這裡每一節都會算進去)
                 let overtimeHours = Math.max(0, regHours - roleBase);
                 let overtimeLoss = overtimeHours * DIFF_OVERTIME;
                 
                 // 2. 輔導課損失
                 let tutorialLoss = tutHours * DIFF_TUTORIAL;
 
-                // 3. 追加基本鐘點損失 (最痛的)
+                // 3. 追加基本鐘點損失
                 let addedBaseLoss = addHours * DIFF_ADDED_BASE;
 
                 weeklyLoss = overtimeLoss + tutorialLoss + addedBaseLoss;
@@ -330,27 +381,25 @@
             return weeklyLoss * weeks;
         }
 
-        // --- 1. 上學期計算 ---
+        // --- 各區塊計算 ---
         let loss1 = getSectionLoss(
             document.getElementById('sem1_reg').value,
             document.getElementById('sem1_tut').value,
-            document.getElementById('sem1_add').value, // 追加欄位
+            document.getElementById('sem1_add').value,
             document.getElementById('sem1_weeks').value,
             false
         );
         document.getElementById('sub_sem1').innerText = `小計 $${loss1.toLocaleString()}`;
 
-        // --- 2. 下學期計算 ---
         let loss2 = getSectionLoss(
             document.getElementById('sem2_reg').value,
             document.getElementById('sem2_tut').value,
-            document.getElementById('sem2_add').value, // 追加欄位
+            document.getElementById('sem2_add').value,
             document.getElementById('sem2_weeks').value,
             false
         );
         document.getElementById('sub_sem2').innerText = `小計 $${loss2.toLocaleString()}`;
 
-        // --- 3. 寒輔 (無追加基本) ---
         let loss3 = getSectionLoss(
             0, 
             document.getElementById('winter_tut').value,
@@ -360,7 +409,6 @@
         );
         document.getElementById('sub_winter').innerText = `小計 $${loss3.toLocaleString()}`;
 
-        // --- 4. 暑輔 (無追加基本) ---
         let loss4 = getSectionLoss(
             0, 
             document.getElementById('summer_tut').value,
@@ -370,11 +418,13 @@
         );
         document.getElementById('sub_summer').innerText = `小計 $${loss4.toLocaleString()}`;
 
-        // --- 總結 ---
-        let total = loss1 + loss2 + loss3 + loss4;
-        document.getElementById('grandTotal').innerText = `$${total.toLocaleString()}`;
+        // --- 總結算 ---
+        let grandTotal = loss1 + loss2 + loss3 + loss4 + totalAllowanceLoss;
+        document.getElementById('grandTotal').innerText = `$${grandTotal.toLocaleString()}`;
     }
 </script>
 
 </body>
 </html>
+
+```
