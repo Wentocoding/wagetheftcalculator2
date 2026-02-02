@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>薪水小偷精算師 5.0 (終極版)</title>
+    <title>薪水小偷精算師 6.0 (法規依據版)</title>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -12,7 +12,7 @@
             --semester-color: #3498db;
             --break-color: #e67e22;
             --allowance-color: #d35400;
-            --bonus-color: #f1c40f; /* 金色：獎金 */
+            --bonus-color: #f1c40f;
             --bonus-text: #7f6000;
             --bg-color: #f4f7f6;
             --card-bg: #ffffff;
@@ -80,7 +80,7 @@
             background-color: #fffdf0;
         }
 
-        /* 1. 薪資結構區 (基數) */
+        /* 1. 薪資結構區 */
         .salary-basis-section {
             background-color: #e8f6f3;
             border: 1px solid #d1f2eb;
@@ -103,7 +103,7 @@
             margin-top: 10px;
         }
 
-        /* 2. 獎金計算區 (重頭戲) */
+        /* 2. 獎金計算區 */
         .bonus-section {
             background-color: #fffcf5;
             border: 2px solid var(--bonus-color);
@@ -142,6 +142,23 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
+        }
+        
+        /* 法規備註 */
+        .legal-note {
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #ccc;
+            line-height: 1.4;
+        }
+        .legal-note a {
+            color: #2980b9;
+            text-decoration: none;
+        }
+        .legal-note a:hover {
+            text-decoration: underline;
         }
 
         /* 區塊通用 */
@@ -202,7 +219,7 @@
             padding: 20px;
             border-radius: 8px;
             text-align: center;
-            border: 3px solid #ffcdd2; /* 加粗框線 */
+            border: 3px solid #ffcdd2;
             box-shadow: 0 4px 6px rgba(0,0,0,0.05);
         }
 
@@ -214,8 +231,8 @@
 <body>
 
 <div class="calculator-card">
-    <h1>薪水小偷精算師 5.0</h1>
-    <div class="subtitle">終極版：年終、考績、加給、鐘點，一毛都別想跑</div>
+    <h1>薪水小偷精算師 6.0</h1>
+    <div class="subtitle">法規依據版：這不是感覺，這是數學與法律</div>
 
     <div class="salary-basis-section">
         <div class="salary-basis-title">💰 STEP 1: 薪資結構 (計算獎金基數)</div>
@@ -246,7 +263,6 @@
             <span>🧧 STEP 2: 年終與考績獎金差額</span>
             <span class="subtotal-tag" style="background:#f39c12;" id="sub_bonus">$0</span>
         </div>
-        
         <div class="input-row">
             <div class="input-group">
                 <label>考績等級</label>
@@ -261,7 +277,6 @@
                 <input type="text" value="1.5 個月" disabled style="background:#eee; color:#777;">
             </div>
         </div>
-
         <div class="bonus-result">
             <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:5px;">
                 <span>應領年終 (1.5):</span>
@@ -271,7 +286,6 @@
                 <span>應領考績:</span>
                 <span id="expected_perf_display" style="font-weight:bold;">$0</span>
             </div>
-            
             <div class="input-row">
                 <div class="input-group">
                     <label style="color:var(--text-color);">實際收到年終</label>
@@ -282,7 +296,6 @@
                     <input type="number" id="actual_perf" placeholder="存摺金額" oninput="calculate()">
                 </div>
             </div>
-            
             <div class="bonus-loss-display" id="bonus_gap_display">
                 獎金短少: $0
             </div>
@@ -294,11 +307,11 @@
         
         <div class="form-group" style="margin-bottom:15px;">
             <label for="role">基本身份 (影響基本鐘點)</label>
-            <select id="role" onchange="calculate()">
+            <select id="role" onchange="handleRoleChange()">
                 <option value="16">專任教師 (基本16)</option>
                 <option value="13">班級導師 (基本13)</option>
-                <option value="0">兼任行政 (基本0 - 全超鐘點)</option>
-            </select>
+                <option value="2">兼任行政 (基本2)</option> </select>
+            <div style="font-size:0.8rem; color:#e67e22; margin-top:5px;">* 選擇「專任教師」將自動追加 3 節基本鐘點。</div>
         </div>
 
         <div style="border-top:1px dashed #ccc; padding-top:10px;">
@@ -313,6 +326,10 @@
                 </div>
             </div>
             <div style="text-align:right; font-size:0.9rem; color:var(--allowance-color);" id="allowanceTotalDisplay">年損: $0</div>
+        </div>
+
+        <div class="legal-note">
+            備註：輔導課支給550元是依照 <a href="https://www.k12ea.gov.tw/Tw/Station/AffairDetail?filter=63F293A9-0155-41A3-97B7-46E43E4685FE&id=4a80ec93-5d8a-47bb-b290-af3d893e0300" target="_blank">高級中等學校學生學習扶助方案</a>
         </div>
     </div>
 
@@ -335,11 +352,11 @@
 
         <div class="input-row">
             <div class="input-group">
-                <label>正規課 / 週</label>
+                <label>正規課 / 週 <span style="font-size:0.8rem; color:#666;">(1-7節)</span></label>
                 <input type="number" id="sem1_reg" placeholder="總節數" oninput="calculate()">
             </div>
             <div class="input-group">
-                <label>輔導課 / 週</label>
+                <label>輔導課 / 週 <span style="font-size:0.8rem; color:#666;">(8-9節/夜/六)</span></label>
                 <input type="number" id="sem1_tut" placeholder="總節數" oninput="calculate()">
             </div>
         </div>
@@ -364,143 +381,14 @@
 
         <div class="input-row">
             <div class="input-group">
-                <label>正規課 / 週</label>
+                <label>正規課 / 週 <span style="font-size:0.8rem; color:#666;">(1-7節)</span></label>
                 <input type="number" id="sem2_reg" placeholder="總節數" oninput="calculate()">
             </div>
             <div class="input-group">
-                <label>輔導課 / 週</label>
+                <label>輔導課 / 週 <span style="font-size:0.8rem; color:#666;">(8-9節/夜/六)</span></label>
                 <input type="number" id="sem2_tut" placeholder="總節數" oninput="calculate()">
             </div>
         </div>
     </div>
 
-    <div class="period-block" style="border-left: 5px solid var(--break-color);">
-        <div class="period-title break-style">
-            <span>寒輔 (Winter)</span>
-            <span class="subtotal-tag" id="sub_winter">$0</span>
-        </div>
-        <div class="input-row">
-            <div class="input-group" style="flex: 2;">
-                <label>輔導課 / 週</label>
-                <input type="number" id="winter_tut" placeholder="每週節數" oninput="calculate()">
-            </div>
-            <div class="input-group">
-                <label>上課週數</label>
-                <input type="number" id="winter_weeks" value="3" oninput="calculate()">
-            </div>
-        </div>
-    </div>
-
-    <div class="period-block" style="border-left: 5px solid var(--break-color);">
-        <div class="period-title break-style">
-            <span>暑輔 (Summer)</span>
-            <span class="subtotal-tag" id="sub_summer">$0</span>
-        </div>
-        <div class="input-row">
-            <div class="input-group" style="flex: 2;">
-                <label>輔導課 / 週</label>
-                <input type="number" id="summer_tut" placeholder="每週節數" oninput="calculate()">
-            </div>
-            <div class="input-group">
-                <label>上課週數</label>
-                <input type="number" id="summer_weeks" value="5" oninput="calculate()">
-            </div>
-        </div>
-    </div>
-
-    <div class="total-loss">
-        <h3>全年度總計短少金額</h3>
-        <div class="amount" id="grandTotal">$0</div>
-        <div class="loss-breakdown">
-            ( 年終考績 + 每月加給 + 鐘點費損失 )
-        </div>
-    </div>
-
-</div>
-
-<script>
-    function calculate() {
-        // --- 1. 計算全薪 (基數) ---
-        const baseSalary = parseFloat(document.getElementById('base_salary').value) || 0;
-        const researchFee = parseFloat(document.getElementById('research_fee').value) || 0;
-        const bossAllowance = parseFloat(document.getElementById('boss_allowance').value) || 0;
-        
-        const monthlyFullSalary = baseSalary + researchFee + bossAllowance;
-        document.getElementById('monthlySalaryDisplay').innerText = `全薪合計: $${monthlyFullSalary.toLocaleString()}`;
-
-        // --- 2. 計算獎金差額 ---
-        const perfGrade = parseFloat(document.getElementById('perf_grade').value); // 1.0 or 0.5 or 0
-        
-        // 應領
-        const expectedYearEnd = monthlyFullSalary * 1.5;
-        const expectedPerf = monthlyFullSalary * perfGrade;
-        
-        // 更新應領顯示
-        document.getElementById('expected_year_end_display').innerText = `$${expectedYearEnd.toLocaleString()}`;
-        document.getElementById('expected_perf_display').innerText = `$${expectedPerf.toLocaleString()}`;
-
-        // 實領
-        const actualYearEnd = parseFloat(document.getElementById('actual_year_end').value) || 0;
-        const actualPerf = parseFloat(document.getElementById('actual_perf').value) || 0;
-
-        // 獎金損失 (不能小於0，萬一溢發不算損失)
-        const bonusLoss = (expectedYearEnd + expectedPerf) - (actualYearEnd + actualPerf);
-        const finalBonusLoss = Math.max(0, bonusLoss); // 若多給不算負債
-        
-        document.getElementById('sub_bonus').innerText = `短少 $${finalBonusLoss.toLocaleString()}`;
-        document.getElementById('bonus_gap_display').innerText = `獎金短少: $${finalBonusLoss.toLocaleString()}`;
-
-
-        // --- 3. 每月加給短少計算 ---
-        const monthlyAllowanceLoss = parseFloat(document.getElementById('monthly_allowance').value) || 0;
-        const allowanceMonths = parseFloat(document.getElementById('allowance_months').value) || 0;
-        const totalAllowanceLoss = monthlyAllowanceLoss * allowanceMonths;
-        document.getElementById('allowanceTotalDisplay').innerText = `年損: $${totalAllowanceLoss.toLocaleString()}`;
-
-
-        // --- 4. 鐘點費計算 ---
-        const roleBase = parseInt(document.getElementById('role').value);
-        const DIFF_OVERTIME = 80; 
-        const DIFF_TUTORIAL = 50; 
-        const DIFF_ADDED_BASE = 505;
-
-        function getSectionLoss(regHours, tutHours, addHours, weeks, isBreak) {
-            regHours = parseFloat(regHours) || 0;
-            tutHours = parseFloat(tutHours) || 0;
-            addHours = parseFloat(addHours) || 0;
-            weeks = parseFloat(weeks) || 0;
-
-            let weeklyLoss = 0;
-            if (isBreak) {
-                weeklyLoss = tutHours * DIFF_TUTORIAL;
-            } else {
-                let overtimeHours = Math.max(0, regHours - roleBase);
-                let overtimeLoss = overtimeHours * DIFF_OVERTIME;
-                let tutorialLoss = tutHours * DIFF_TUTORIAL;
-                let addedBaseLoss = addHours * DIFF_ADDED_BASE;
-                weeklyLoss = overtimeLoss + tutorialLoss + addedBaseLoss;
-            }
-            return weeklyLoss * weeks;
-        }
-
-        let loss1 = getSectionLoss(document.getElementById('sem1_reg').value, document.getElementById('sem1_tut').value, document.getElementById('sem1_add').value, document.getElementById('sem1_weeks').value, false);
-        document.getElementById('sub_sem1').innerText = `小計 $${loss1.toLocaleString()}`;
-
-        let loss2 = getSectionLoss(document.getElementById('sem2_reg').value, document.getElementById('sem2_tut').value, document.getElementById('sem2_add').value, document.getElementById('sem2_weeks').value, false);
-        document.getElementById('sub_sem2').innerText = `小計 $${loss2.toLocaleString()}`;
-
-        let loss3 = getSectionLoss(0, document.getElementById('winter_tut').value, 0, document.getElementById('winter_weeks').value, true);
-        document.getElementById('sub_winter').innerText = `小計 $${loss3.toLocaleString()}`;
-
-        let loss4 = getSectionLoss(0, document.getElementById('summer_tut').value, 0, document.getElementById('summer_weeks').value, true);
-        document.getElementById('sub_summer').innerText = `小計 $${loss4.toLocaleString()}`;
-
-        // --- 5. 終極加總 ---
-        // 包含：獎金損失 + 加給損失 + 四大鐘點損失
-        let grandTotal = finalBonusLoss + totalAllowanceLoss + loss1 + loss2 + loss3 + loss4;
-        document.getElementById('grandTotal').innerText = `$${grandTotal.toLocaleString()}`;
-    }
-</script>
-
-</body>
-</html>
+    <div class="period-block" style="border-left
