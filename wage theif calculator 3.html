@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>薪水小偷精算師 3.0</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-red: #c0392b;
+            --deep-red: #8b0000; /* 新增深紅色給最痛的損失 */
+            --semester-color: #3498db;
+            --break-color: #e67e22;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .calculator-card {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 600px;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-top: 5px solid var(--accent-red);
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+            font-size: 1.8rem;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 25px;
+        }
+
+        /* 身份選擇區 */
+        .role-section {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            background-color: #fffdf0;
+        }
+
+        /* 區塊樣式 */
+        .period-block {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .period-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sem-style { color: var(--semester-color); border-color: var(--semester-color); }
+        .break-style { color: var(--break-color); border-color: var(--break-color); }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: flex-end; /* 讓輸入框底部對齊 */
+        }
+
+        .input-group {
+            flex: 1;
+        }
+
+        .subtotal-tag {
+            font-size: 0.9rem;
+            color: #fff;
+            background-color: #95a5a6;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* 特別強調「追加基本鐘點」 */
+        .extra-loss-label {
+            color: var(--deep-red) !important;
+        }
+        .extra-loss-input {
+            border-color: var(--accent-red) !important;
+            background-color: #fff5f5;
+        }
+
+        /* 結果區 */
+        .total-loss {
+            margin-top: 30px;
+            background-color: #ffebee;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #ffcdd2;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        .total-loss h3 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #c62828;
+        }
+
+        .total-loss .amount {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #c62828;
+            margin-top: 10px;
+        }
+
+        .loss-breakdown {
+            font-size: 0.85rem;
+            color: #666;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-card">
+    <h1>薪水小偷精算師 3.0</h1>
+    <div class="subtitle">追加計算：連每節 $505 的基本鐘點都要算回來</div>
+
+    <div class="role-section">
+        <label for="role">設定基本身份 (影響學期超鐘點起算)</label>
+        <select id="role" onchange="calculate()">
+            <option value="16">專任教師 (基本鐘點 16)</option>
+            <option value="13">班級導師 (基本鐘點 13)</option>
+            <option value="3">兼任行政 (基本鐘點 3)</option>
+        </select>
+        <div style="font-size: 0.8rem; color: #666; margin-top: 5px;">
+            * 費率差額說明：<br>
+            1. 超鐘點：少給 $80/節 (505-425)<br>
+            2. 輔導課：少給 $50/節 (550-500)<br>
+            3. 追加基本鐘點：少給 <b style="color:var(--deep-red)">$505/節</b> (全額損失)
+        </div>
+    </div>
+
+    <div class="period-block" style="border-left: 5px solid var(--semester-color);">
+        <div class="period-title sem-style">
+            <span>一、上學期 (Regular)</span>
+            <span class="subtotal-tag" id="sub_sem1">$0</span>
+        </div>
+        
+        <div class="input-row">
+            <div class="input-group">
+                <label class="extra-loss-label">🔥 追加基本鐘點 / 週</label>
+                <input type="number" id="sem1_add" placeholder="每週幾節？(如: 3)" min="0" oninput="calculate()" class="extra-loss-input">
+            </div>
+            <div class="input-group">
+                <label>上課週數</label>
+                <input type="number" id="sem1_weeks" value="20" min="0" oninput="calculate()">
+            </div>
+        </div>
+
+        <div class="input-row">
+            <div class="input-group">
+                <label>正規課 / 週</label>
+                <input type="number" id="sem1_reg" placeholder="總節數" min="0" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>輔導課 / 週</label>
+                <input type="number" id="sem1_tut" placeholder="總節數" min="0" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <div class="period-block" style="border-left: 5px solid var(--semester-color);">
+        <div class="period-title sem-style">
+            <span>二、下學期 (Regular)</span>
+            <span class="subtotal-tag" id="sub_sem2">$0</span>
+        </div>
+        
+        <div class="input-row">
+            <div class="input-group">
+                <label class="extra-loss-label">🔥 追加基本鐘點 / 週</label>
+                <input type="number" id="sem2_add" placeholder="每週幾節？(如: 3)" min="0" oninput="calculate()" class="extra-loss-input">
+            </div>
+            <div class="input-group">
+                <label>上課週數</label>
+                <input type="number" id="sem2_weeks" value="20" min="0" oninput="calculate()">
+            </div>
+        </div>
+
+        <div class="input-row">
+            <div class="input-group">
+                <label>正規課 / 週</label>
+                <input type="number" id="sem2_reg" placeholder="總節數" min="0" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>輔導課 / 週</label>
+                <input type="number" id="sem2_tut" placeholder="總節數" min="0" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <div class="period-block" style="border-left: 5px solid var(--break-color);">
+        <div class="period-title break-style">
+            <span>三、寒輔 (Winter Break)</span>
+            <span class="subtotal-tag" id="sub_winter">$0</span>
+        </div>
+        <div class="input-row">
+            <div class="input-group" style="flex: 2;">
+                <label>輔導課 / 週</label>
+                <input type="number" id="winter_tut" placeholder="寒輔每週節數" min="0" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>上課週數</label>
+                <input type="number" id="winter_weeks" value="3" min="0" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <div class="period-block" style="border-left: 5px solid var(--break-color);">
+        <div class="period-title break-style">
+            <span>四、暑輔 (Summer Break)</span>
+            <span class="subtotal-tag" id="sub_summer">$0</span>
+        </div>
+        <div class="input-row">
+            <div class="input-group" style="flex: 2;">
+                <label>輔導課 / 週</label>
+                <input type="number" id="summer_tut" placeholder="暑輔每週節數" min="0" oninput="calculate()">
+            </div>
+            <div class="input-group">
+                <label>上課週數</label>
+                <input type="number" id="summer_weeks" value="5" min="0" oninput="calculate()">
+            </div>
+        </div>
+    </div>
+
+    <div class="total-loss">
+        <h3>全年度總計短少金額</h3>
+        <div class="amount" id="grandTotal">$0</div>
+        <div class="loss-breakdown">
+            包含超鐘點、輔導課差額、以及<span style="color:var(--deep-red); font-weight:bold;">追加基本鐘點</span>損失
+        </div>
+    </div>
+
+</div>
+
+<script>
+    function calculate() {
+        const roleBase = parseInt(document.getElementById('role').value);
+        
+        // --- 定義費率 ---
+        const DIFF_OVERTIME = 80; // 505 - 425
+        const DIFF_TUTORIAL = 50; // 550 - 500
+        const DIFF_ADDED_BASE = 505; // 0 - 505 (完全沒給)
+
+        // --- 計算函式 ---
+        // 參數: 正規課節數, 輔導課節數, 追加基本節數, 週數, 是否為寒暑輔
+        function getSectionLoss(regHours, tutHours, addHours, weeks, isBreak) {
+            regHours = parseFloat(regHours) || 0;
+            tutHours = parseFloat(tutHours) || 0;
+            addHours = parseFloat(addHours) || 0;
+            weeks = parseFloat(weeks) || 0;
+
+            let weeklyLoss = 0;
+
+            if (isBreak) {
+                // 寒暑輔：只算輔導課差額
+                weeklyLoss = tutHours * DIFF_TUTORIAL;
+            } else {
+                // 學期中：
+                // 1. 超鐘點損失
+                let overtimeHours = Math.max(0, regHours - roleBase);
+                let overtimeLoss = overtimeHours * DIFF_OVERTIME;
+                
+                // 2. 輔導課損失
+                let tutorialLoss = tutHours * DIFF_TUTORIAL;
+
+                // 3. 追加基本鐘點損失 (最痛的)
+                let addedBaseLoss = addHours * DIFF_ADDED_BASE;
+
+                weeklyLoss = overtimeLoss + tutorialLoss + addedBaseLoss;
+            }
+
+            return weeklyLoss * weeks;
+        }
+
+        // --- 1. 上學期計算 ---
+        let loss1 = getSectionLoss(
+            document.getElementById('sem1_reg').value,
+            document.getElementById('sem1_tut').value,
+            document.getElementById('sem1_add').value, // 追加欄位
+            document.getElementById('sem1_weeks').value,
+            false
+        );
+        document.getElementById('sub_sem1').innerText = `小計 $${loss1.toLocaleString()}`;
+
+        // --- 2. 下學期計算 ---
+        let loss2 = getSectionLoss(
+            document.getElementById('sem2_reg').value,
+            document.getElementById('sem2_tut').value,
+            document.getElementById('sem2_add').value, // 追加欄位
+            document.getElementById('sem2_weeks').value,
+            false
+        );
+        document.getElementById('sub_sem2').innerText = `小計 $${loss2.toLocaleString()}`;
+
+        // --- 3. 寒輔 (無追加基本) ---
+        let loss3 = getSectionLoss(
+            0, 
+            document.getElementById('winter_tut').value,
+            0,
+            document.getElementById('winter_weeks').value,
+            true
+        );
+        document.getElementById('sub_winter').innerText = `小計 $${loss3.toLocaleString()}`;
+
+        // --- 4. 暑輔 (無追加基本) ---
+        let loss4 = getSectionLoss(
+            0, 
+            document.getElementById('summer_tut').value,
+            0,
+            document.getElementById('summer_weeks').value,
+            true
+        );
+        document.getElementById('sub_summer').innerText = `小計 $${loss4.toLocaleString()}`;
+
+        // --- 總結 ---
+        let total = loss1 + loss2 + loss3 + loss4;
+        document.getElementById('grandTotal').innerText = `$${total.toLocaleString()}`;
+    }
+</script>
+
+</body>
+</html>
